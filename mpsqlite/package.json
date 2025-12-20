@@ -1,0 +1,25 @@
+{
+  "name": "mpsqlite",
+  "version": "0.1.0",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist",
+    "static"
+  ],
+  "scripts": {
+    "build": "tsc"
+  },
+  "devDependencies": {
+    "@types/sql.js": "^1.4.9",
+    "typescript": "^5.9.3"
+  },
+  "prepare": "npm run build",
+  "dependencies": {
+    "@dcloudio/types": "^3.4.28",
+    "@types/webassembly-web-api": "^0.0.7",
+    "@types/wechat-miniprogram": "^3.4.9",
+    "sql.js": "1.13.0"
+  }
+}
