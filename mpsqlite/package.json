@@ -1,6 +1,17 @@
 {
-  "name": "mpsqlite",
+  "name": "@llehtahw/mpsqlite",
   "version": "0.1.0",
+  "description": "",
+  "homepage": "https://github.com/llehtahw/miniprogram-sqlite#readme",
+  "bugs": {
+    "url": "https://github.com/llehtahw/miniprogram-sqlite/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/llehtahw/miniprogram-sqlite.git"
+  },
+  "license": "MIT",
+  "author": "llehtahw",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -11,15 +22,15 @@
   "scripts": {
     "build": "tsc"
   },
-  "devDependencies": {
-    "@types/sql.js": "^1.4.9",
-    "typescript": "^5.9.3"
-  },
-  "prepare": "npm run build",
   "dependencies": {
     "@dcloudio/types": "^3.4.28",
     "@types/webassembly-web-api": "^0.0.7",
     "@types/wechat-miniprogram": "^3.4.9",
     "sql.js": "1.13.0"
-  }
+  },
+  "devDependencies": {
+    "@types/sql.js": "^1.4.9",
+    "typescript": "^5.9.3"
+  },
+  "prepare": "npm run build"
 }
