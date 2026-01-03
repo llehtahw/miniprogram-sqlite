@@ -1,11 +1,12 @@
 /// <reference types="@types/webassembly-web-api" />
-import { DataToPath } from './signatures.js';
+import { DataToPath } from "./signatures.js";
 
 declare const WXWebAssembly: typeof WebAssembly | undefined;
 
-const WASM = (globalThis as any).WebAssembly || (globalThis as any).WXWebAssembly;
+const WASM =
+  (globalThis as any).WebAssembly || (globalThis as any).WXWebAssembly;
 if (!WASM) {
-  throw new Error('[mpsqlite] 未找到 WASM');
+  throw new Error("[mpsqlite] 未找到 WASM");
 }
 
 let global_instance: WebAssembly.Instance | null = null;
@@ -27,7 +28,7 @@ export function _getTablePrototype(tb?: WebAssembly.Table): void {
     tb ||
     new WASM.Table({
       initial: 1,
-      element: 'anyfunc',
+      element: "anyfunc",
     });
   const table_prototype = Object.getPrototypeOf(_tmp_tb);
   const originTableSet = table_prototype.set;
@@ -62,25 +63,31 @@ export function resetSetFlag(): void {
 /**
  * 包装函数以临时替换 WebAssembly 和 TypeError
  */
-export function modulePatched<T extends (...args: any[]) => any>(this: any, func: T): T {
+export function modulePatched<T extends (...args: any[]) => any>(
+  this: any,
+  func: T,
+): T {
   return ((...args: any[]) => {
     const originTypeError = globalThis.TypeError;
     globalThis.TypeError = globalThis.Error as any;
     const origin = globalThis.WebAssembly;
-    globalThis.WebAssembly = new Proxy((globalThis as any).WXWebAssembly || (globalThis as any).WebAssembly, {
-      get: (target: any, prop: string, _receiver: any) => {
-        switch (prop) {
-          case 'Module':
-            // 小程序应该是堵死了任何JIT，好在需要JIT的函数不多，可以提前放进代码包中。
-            return (data: any) => {
-              const path = DataToPath(data);
-              return new target.Module(path);
-            };
-          default:
-            return (target as any)[prop];
-        }
+    globalThis.WebAssembly = new Proxy(
+      (globalThis as any).WXWebAssembly || (globalThis as any).WebAssembly,
+      {
+        get: (target: any, prop: string, _receiver: any) => {
+          switch (prop) {
+            case "Module":
+              // 小程序应该是堵死了任何JIT，好在需要JIT的函数不多，可以提前放进代码包中。
+              return (data: any) => {
+                const path = DataToPath(data);
+                return new target.Module(path);
+              };
+            default:
+              return (target as any)[prop];
+          }
+        },
       },
-    });
+    );
     try {
       return func.apply(this, args);
     } finally {
@@ -93,30 +100,36 @@ export function modulePatched<T extends (...args: any[]) => any>(this: any, func
 /**
  * 包装函数以 patch WebAssembly API
  */
-export function patchWebAssembly<T extends (...args: any[]) => any>(this: any, func: T): T {
+export function patchWebAssembly<T extends (...args: any[]) => any>(
+  this: any,
+  func: T,
+): T {
   const originWebAssembly = globalThis.WebAssembly;
   const originTypeError = globalThis.TypeError;
   return ((...args: any[]) => {
     try {
-      globalThis.WebAssembly = new Proxy((globalThis as any).WXWebAssembly || (globalThis as any).WebAssembly, {
-        get: (target, prop, _receiver) => {
-          switch (prop) {
-            case 'Module':
-              return (data: any) => {
-                const path = DataToPath(data);
-                return new target.Module(path);
-              };
-            case 'Instance':
-              return (a: any, b: any) => {
-                globalThis.TypeError = originTypeError;
-                const res = target.Instance(a, b);
-                return res;
-              };
-            default:
-              return (target as any)[prop];
-          }
+      globalThis.WebAssembly = new Proxy(
+        (globalThis as any).WXWebAssembly || (globalThis as any).WebAssembly,
+        {
+          get: (target, prop, _receiver) => {
+            switch (prop) {
+              case "Module":
+                return (data: any) => {
+                  const path = DataToPath(data);
+                  return new target.Module(path);
+                };
+              case "Instance":
+                return (a: any, b: any) => {
+                  globalThis.TypeError = originTypeError;
+                  const res = target.Instance(a, b);
+                  return res;
+                };
+              default:
+                return (target as any)[prop];
+            }
+          },
         },
-      });
+      );
       return func.apply(this, args);
     } finally {
       globalThis.WebAssembly = originWebAssembly;
@@ -127,12 +140,15 @@ export function patchWebAssembly<T extends (...args: any[]) => any>(this: any, f
 /**
  * 包装函数以测试 create_function
  */
-export function patchWeakMapReturnTrue<T extends (...args: any[]) => any>(this: any, func: T): T {
+export function patchWeakMapReturnTrue<T extends (...args: any[]) => any>(
+  this: any,
+  func: T,
+): T {
   return ((...args: any[]) => {
     const originGet = globalThis.WeakMap.prototype.get;
     try {
       globalThis.WeakMap.prototype.get = function (..._args: any[]) {
-        throw new Error('I do not know');
+        throw new Error("I do not know");
       };
       return func.apply(this, args);
     } finally {
@@ -140,4 +156,3 @@ export function patchWeakMapReturnTrue<T extends (...args: any[]) => any>(this: 
     }
   }) as T;
 }
-

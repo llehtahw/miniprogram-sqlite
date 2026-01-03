@@ -1,7 +1,11 @@
 /// <reference types="@dcloudio/types" />
 /// <reference types="@types/webassembly-web-api" />
-import initSqlJs, { SqlJsConfig, type Database, type SqlJsStatic } from 'sql.js';
-import { getConfig, isConfigured } from './config.js';
+import initSqlJs, {
+  SqlJsConfig,
+  type Database,
+  type SqlJsStatic,
+} from "sql.js";
+import { getConfig, isConfigured } from "./config.js";
 import {
   _getTablePrototype,
   setGlobalInstance,
@@ -10,7 +14,7 @@ import {
   modulePatched,
   patchWebAssembly,
   patchWeakMapReturnTrue,
-} from './wasm-patch.js';
+} from "./wasm-patch.js";
 
 declare const uni: UniNamespace.Uni | undefined;
 declare const wx: WechatMiniprogram.Wx | undefined;
@@ -19,24 +23,25 @@ declare const WXWebAssembly: typeof WebAssembly | undefined;
 let SQL: SqlJsStatic | Promise<SqlJsStatic> | null = null;
 let wasm_path: string | null = null;
 
-export interface SQLiteOptions {
-  wasm_path?: string;
-  config?: SqlJsConfig;
-}
-
 /**
  * Initializes the SQL.js engine with enhanced features.
  * This includes prefill, table patch, and function cleanup.
  * Requires configureMPSQLite to be called first.
  */
-export async function initSQLite(config: SQLiteOptions = {}): Promise<SqlJsStatic> {
+export async function initSQLite(
+  config: { wasm_path?: string; config?: SqlJsConfig } = {},
+): Promise<SqlJsStatic> {
   // 检查是否已配置
   if (!isConfigured()) {
-    throw new Error('[mpsqlite] 在调用 initSQLite 之前必须先调用 configureMPSQLite');
+    throw new Error(
+      "[mpsqlite] 在调用 initSQLite 之前必须先调用 configureMPSQLite",
+    );
   }
 
   if (config.wasm_path && wasm_path && config.wasm_path !== wasm_path) {
-    console.warn(`[mpsqlite] 指定了不同的 WASM 路径: ${wasm_path} -> ${config.wasm_path}`);
+    console.warn(
+      `[mpsqlite] 指定了不同的 WASM 路径: ${wasm_path} -> ${config.wasm_path}`,
+    );
   }
   if (SQL instanceof Promise) {
     const sql = await SQL;
@@ -55,46 +60,44 @@ export async function initSQLite(config: SQLiteOptions = {}): Promise<SqlJsStati
     console.info(`[mpsqlite] 从 ${wasm_path} 加载 WASM`);
   }
 
-  const WASM = (globalThis as any).WebAssembly || (globalThis as any).WXWebAssembly;
+  const WASM =
+    (globalThis as any).WebAssembly || (globalThis as any).WXWebAssembly;
   if (!WASM) {
-    throw new Error('[mpsqlite] 找不到合适的 WASM 接口');
+    throw new Error("[mpsqlite] 找不到合适的 WASM 接口");
   }
 
   SQL = new Promise<SqlJsStatic>((resolve, reject) => {
     initSqlJs({
-      instantiateWasm: (imports: WebAssembly.Imports, successCallback: (module: WebAssembly.Instance) => void): undefined => {
-        console.info('[mpsqlite] 加载 WASM', imports);
+      instantiateWasm: (
+        imports: WebAssembly.Imports,
+        successCallback: (module: WebAssembly.Instance) => void,
+      ): undefined => {
+        console.info("[mpsqlite] 加载 WASM", imports);
         console.info(`[mpsqlite] 使用 WASM: ${WASM}`);
-        
+
         WASM.instantiate(wasm_path!, imports)
           .then((result: any) => {
             const table = result.instance.exports.O;
             setGlobalInstance(result.instance);
-            
+
             // Growing table
-            console.info('[mpsqlite] 扩展 table');
+            console.info("[mpsqlite] 扩展 table");
             table.grow(512);
-            
+
             // Prefilling table
-            console.info('[mpsqlite] 预填充 table');
+            console.info("[mpsqlite] 预填充 table");
             const prefillPath = internalConfig.prefillWasmPath;
-            // const mod = new WASM.Module(prefillPath as any);
-            // new WASM.Instance(mod, {
-            //   env: {
-            //     table,
-            //   },
-            // });
             WASM.instantiate(prefillPath, {
               env: {
-                table
-              }
+                table,
+              },
             });
-            console.info('[mpsqlite] table 预填充完成');
-            
+            console.info("[mpsqlite] table 预填充完成");
+
             // Patch table prototype
             _getTablePrototype(table);
             console.info(`[mpsqlite] 预填充后 table 长度: ${table.length}`);
-            
+
             successCallback(result.instance);
           })
           .catch((error: any) => {
@@ -105,11 +108,11 @@ export async function initSQLite(config: SQLiteOptions = {}): Promise<SqlJsStati
       },
     })
       .then((res) => {
-        console.info('[mpsqlite] 初始化 sql.js 成功');
+        console.info("[mpsqlite] 初始化 sql.js 成功");
         resolve(res);
       })
       .catch((err) => {
-        console.error('[mpsqlite] 加载 sql.js 失败', err);
+        console.error("[mpsqlite] 加载 sql.js 失败", err);
         reject(new Error(`加载 sql.js 失败: ${err.message || err}`));
       });
   });
@@ -120,20 +123,20 @@ export async function initSQLite(config: SQLiteOptions = {}): Promise<SqlJsStati
   // 测试和清理
   try {
     if (getSetFlag()) {
-      throw new Error('[mpsqlite] table set 已被 patch');
+      throw new Error("[mpsqlite] table set 已被 patch");
     }
 
     patchWebAssembly(() => {
       const db = new sqlInstance.Database();
       try {
         patchWeakMapReturnTrue(() => {
-          db.create_function('hahaha', () => {});
+          db.create_function("hahaha", () => {});
         })();
       } catch (e: any) {
-        if (e.message && e.message.includes('I do not know')) {
+        if (e.message && e.message.includes("I do not know")) {
           // 预期的错误，忽略
         } else {
-          console.error('[mpsqlite] create_function 测试失败', e);
+          console.error("[mpsqlite] create_function 测试失败", e);
           throw e;
         }
       } finally {
@@ -147,7 +150,7 @@ export async function initSQLite(config: SQLiteOptions = {}): Promise<SqlJsStati
     }
 
     if (!getSetFlag()) {
-      throw new Error('[mpsqlite] table set 未被 patch');
+      throw new Error("[mpsqlite] table set 未被 patch");
     }
 
     return sqlInstance;
@@ -160,58 +163,11 @@ export async function initSQLite(config: SQLiteOptions = {}): Promise<SqlJsStati
   }
 }
 
-/**
- * Loads a SQLite database from a memory buffer (ArrayBuffer or Uint8Array).
- * @param buffer The database file content.
- * @param options Initialization options.
- */
-export async function loadFromMemory(
-  buffer: ArrayBuffer | Uint8Array,
-  options?: SQLiteOptions
-): Promise<Database> {
-  const sql = await initSQLite(options);
-  // Convert ArrayBuffer to Uint8Array if necessary
-  const data = buffer instanceof Uint8Array ? buffer : new Uint8Array(buffer);
-  return new sql.Database(data);
-}
-
-/**
- * Loads a SQLite database from a local file path using MiniProgram/UniApp FileSystemManager.
- * @param filePath The local path to the .db file (e.g., '/static/my.db' or relative path).
- * @param options Initialization options.
- */
-export async function loadFromPath(
-  filePath: string,
-  options?: SQLiteOptions
-): Promise<Database> {
-  // Check for UniApp/WeChat environment
-  const fs = (typeof uni !== 'undefined' ? uni : (typeof wx !== 'undefined' ? wx : null))?.getFileSystemManager();
-
-  if (!fs) {
-    throw new Error('[mpsqlite] 未找到 FileSystemManager，请确保在 MiniProgram/UniApp 环境中运行');
-  }
-
-  return new Promise((resolve, reject) => {
-    fs.readFile({
-      filePath: filePath,
-      success: async (res: any) => {
-        try {
-          // res.data is ArrayBuffer
-          const db = await loadFromMemory(res.data, options);
-          resolve(db);
-        } catch (e) {
-          reject(e);
-        }
-      },
-      fail: (err: any) => {
-        reject(new Error(`[mpsqlite] 读取文件失败 ${filePath}: ${err.errMsg || err}`));
-      }
-    });
-  });
-}
-
 // 辅助函数：从 buffer 打开数据库
-function openFromBuffer(buffer: ArrayBuffer | Uint8Array, SQL: SqlJsStatic): Database {
+function openFromBuffer(
+  buffer: ArrayBuffer | Uint8Array,
+  SQL: SqlJsStatic,
+): Database {
   console.info(`[mpsqlite] 从 buffer 打开数据库`);
   let content: Uint8Array;
   if (buffer instanceof Uint8Array) {
@@ -232,28 +188,39 @@ function openEmptyDatabase(SQL: SqlJsStatic): Database {
 }
 
 // 辅助函数：从压缩文件（.br）打开数据库
-async function openFromCompressedFile(path: string, SQL: SqlJsStatic): Promise<Database> {
+async function openFromCompressedFile(
+  path: string,
+  SQL: SqlJsStatic,
+): Promise<Database> {
   console.info(`[mpsqlite] 从压缩文件打开数据库: ${path}`);
-  const fs = (typeof uni !== 'undefined' ? uni : (typeof wx !== 'undefined' ? wx : null))?.getFileSystemManager();
+  const fs = (
+    typeof uni !== "undefined" ? uni : typeof wx !== "undefined" ? wx : null
+  )?.getFileSystemManager();
 
   if (!fs) {
-    throw new Error('[mpsqlite] 未找到 FileSystemManager，请确保在 MiniProgram/UniApp 环境中运行');
+    throw new Error(
+      "[mpsqlite] 未找到 FileSystemManager，请确保在 MiniProgram/UniApp 环境中运行",
+    );
   }
 
   // 读取并解压文件
   const decompressedData = await new Promise<Uint8Array>((resolve, reject) => {
     (fs as any).readCompressedFile({
       filePath: path,
-      compressionAlgorithm: 'br',
+      compressionAlgorithm: "br",
       success: (res: any) => {
         // 解压后的数据是 ArrayBuffer
         const data = new Uint8Array(res.data);
-        console.info('[mpsqlite] 数据库解压成功');
+        console.info("[mpsqlite] 数据库解压成功");
         resolve(data);
       },
       fail: (err: any) => {
-        console.error('[mpsqlite] 读取压缩数据库文件失败', err);
-        reject(new Error(`[mpsqlite] 读取压缩数据库失败: ${err.errMsg || '未知错误'}`));
+        console.error("[mpsqlite] 读取压缩数据库文件失败", err);
+        reject(
+          new Error(
+            `[mpsqlite] 读取压缩数据库失败: ${err.errMsg || "未知错误"}`,
+          ),
+        );
       },
     });
   });
@@ -263,12 +230,19 @@ async function openFromCompressedFile(path: string, SQL: SqlJsStatic): Promise<D
 }
 
 // 辅助函数：从普通数据库文件打开
-async function openFromDatabaseFile(path: string, SQL: SqlJsStatic): Promise<Database> {
+async function openFromDatabaseFile(
+  path: string,
+  SQL: SqlJsStatic,
+): Promise<Database> {
   console.info(`[mpsqlite] 从数据库文件打开: ${path}`);
-  const fs = (typeof uni !== 'undefined' ? uni : (typeof wx !== 'undefined' ? wx : null))?.getFileSystemManager();
+  const fs = (
+    typeof uni !== "undefined" ? uni : typeof wx !== "undefined" ? wx : null
+  )?.getFileSystemManager();
 
   if (!fs) {
-    throw new Error('[mpsqlite] 未找到 FileSystemManager，请确保在 MiniProgram/UniApp 环境中运行');
+    throw new Error(
+      "[mpsqlite] 未找到 FileSystemManager，请确保在 MiniProgram/UniApp 环境中运行",
+    );
   }
 
   // 读取文件
@@ -280,8 +254,10 @@ async function openFromDatabaseFile(path: string, SQL: SqlJsStatic): Promise<Dat
         resolve(data);
       },
       fail: (err: any) => {
-        console.error('[mpsqlite] 读取数据库文件失败', err);
-        reject(new Error(`[mpsqlite] 读取数据库失败: ${err.errMsg || '未知错误'}`));
+        console.error("[mpsqlite] 读取数据库文件失败", err);
+        reject(
+          new Error(`[mpsqlite] 读取数据库失败: ${err.errMsg || "未知错误"}`),
+        );
       },
     });
   });
@@ -297,7 +273,7 @@ async function openFromDatabaseFile(path: string, SQL: SqlJsStatic): Promise<Dat
  * @returns Database 实例
  */
 export async function sqliteOpen(
-  pathOrBuffer?: string | ArrayBuffer | Uint8Array | null
+  pathOrBuffer?: string | ArrayBuffer | Uint8Array | null,
 ): Promise<Database> {
   const SQL = await initSQLite();
   const res = await (async () => {
@@ -307,11 +283,11 @@ export async function sqliteOpen(
     }
 
     // 判断参数类型：string 表示文件路径，否则是 buffer
-    if (typeof pathOrBuffer === 'string') {
+    if (typeof pathOrBuffer === "string") {
       const path = pathOrBuffer;
 
       // 根据文件扩展名选择相应的处理函数
-      if (path.endsWith('.br')) {
+      if (path.endsWith(".br")) {
         return await openFromCompressedFile(path, SQL);
       } else {
         return await openFromDatabaseFile(path, SQL);
@@ -329,4 +305,4 @@ export async function sqliteOpen(
 }
 
 // 导出配置函数
-export { configureMPSQLite, type MPSQLiteConfig } from './config.js';
+export { configureMPSQLite, type MPSQLiteConfig } from "./config.js";

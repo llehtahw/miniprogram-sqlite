@@ -23,22 +23,24 @@ let configured = false;
  */
 export function configureMPSQLite(userConfig: MPSQLiteConfig): void {
   if (configured) {
-    throw new Error('[mpsqlite] configureMPSQLite 只能调用一次');
+    throw new Error("[mpsqlite] configureMPSQLite 只能调用一次");
   }
 
   const staticDir = userConfig.staticDir;
   if (!staticDir) {
-    throw new Error('[mpsqlite] staticDir 是必需的');
+    throw new Error("[mpsqlite] staticDir 是必需的");
   }
 
   // 确保路径以 / 结尾
-  const normalizedStaticDir = staticDir.endsWith('/') ? staticDir : `${staticDir}/`;
+  const normalizedStaticDir = staticDir.endsWith("/")
+    ? staticDir
+    : `${staticDir}/`;
 
   config = {
     staticDir: normalizedStaticDir,
     sqlWasmPath: `${normalizedStaticDir}sql-wasm.wasm.br`,
     prefillWasmPath: `${normalizedStaticDir}prefill.wasm.br`,
-    signatureFiles: ['viii', 'viiiil'],
+    signatureFiles: ["viii", "viiiil"],
   };
 
   configured = true;
@@ -50,7 +52,7 @@ export function configureMPSQLite(userConfig: MPSQLiteConfig): void {
  */
 export function getConfig(): InternalConfig {
   if (!config || !configured) {
-    throw new Error('[mpsqlite] 必须先调用 configureMPSQLite');
+    throw new Error("[mpsqlite] 必须先调用 configureMPSQLite");
   }
   return config;
 }
@@ -61,4 +63,3 @@ export function getConfig(): InternalConfig {
 export function isConfigured(): boolean {
   return configured;
 }
-

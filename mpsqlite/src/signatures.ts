@@ -1,6 +1,6 @@
 /// <reference types="@dcloudio/types" />
 /// <reference types="@types/wechat-miniprogram" />
-import { getConfig } from './config.js';
+import { getConfig } from "./config.js";
 
 declare const uni: UniNamespace.Uni | undefined;
 declare const wx: WechatMiniprogram.Wx | undefined;
@@ -15,9 +15,13 @@ function getSignatures(): Record<string, ArrayBuffer> {
     return signatures;
   }
 
-  const fs = (typeof uni !== 'undefined' ? uni : (typeof wx !== 'undefined' ? wx : null))?.getFileSystemManager();
+  const fs = (
+    typeof uni !== "undefined" ? uni : typeof wx !== "undefined" ? wx : null
+  )?.getFileSystemManager();
   if (!fs) {
-    throw new Error('[mpsqlite] 未找到 FileSystemManager，请确保在 MiniProgram/UniApp 环境中运行');
+    throw new Error(
+      "[mpsqlite] 未找到 FileSystemManager，请确保在 MiniProgram/UniApp 环境中运行",
+    );
   }
 
   const config = getConfig();
@@ -66,7 +70,6 @@ export function DataToPath(data: Uint8Array | ArrayBuffer): string {
     }
   }
 
-  console.error('[mpsqlite] DataToPath: 未找到匹配的签名', data);
-  throw new Error('DataToPath: 未找到匹配的签名');
+  console.error("[mpsqlite] DataToPath: 未找到匹配的签名", data);
+  throw new Error("DataToPath: 未找到匹配的签名");
 }
-
