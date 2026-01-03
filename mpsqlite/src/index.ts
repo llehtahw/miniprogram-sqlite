@@ -87,11 +87,23 @@ export async function initSQLite(
             // Prefilling table
             console.info("[mpsqlite] 预填充 table");
             const prefillPath = internalConfig.prefillWasmPath;
-            WASM.instantiate(prefillPath, {
-              env: {
-                table,
-              },
-            });
+            /// 为什么这里需要判断 WASM.Module 呢？
+            /// 因为我试了一下，安卓模拟器上运行微信，WXWebAssembly.Module 是 undefined。
+            /// 但是 IOS 上运行 instantiate 似乎会直接崩溃。
+            if (WASM.Module) {
+              const mod = WASM.Module(prefillPath);
+              new WASM.Instance(mod, {
+                env: {
+                  table,
+                },
+              });
+            } else {
+              WASM.instantiate(prefillPath, {
+                env: {
+                  table,
+                },
+              });
+            }
             console.info("[mpsqlite] table 预填充完成");
 
             // Patch table prototype
