@@ -91,7 +91,7 @@ export async function initSQLite(
             /// 因为我试了一下，安卓模拟器上运行微信，WXWebAssembly.Module 是 undefined。
             /// 但是 IOS 上运行 instantiate 似乎会直接崩溃。
             if (WASM.Module) {
-              const mod = WASM.Module(prefillPath);
+              const mod = new WASM.Module(prefillPath);
               new WASM.Instance(mod, {
                 env: {
                   table,
