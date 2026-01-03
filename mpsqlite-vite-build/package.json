@@ -1,6 +1,6 @@
 {
-  "name": "@llehtahw/mpsqlite",
-  "version": "0.2.3",
+  "name": "@llehtahw/mpsqlite-vite-build",
+  "version": "0.1.1",
   "description": "",
   "homepage": "https://github.com/llehtahw/miniprogram-sqlite#readme",
   "bugs": {
@@ -12,25 +12,27 @@
   },
   "license": "MIT",
   "author": "llehtahw",
-  "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "require": "./dist/index.js"
+    }
+  },
   "files": [
-    "dist",
-    "static"
+    "dist"
   ],
   "scripts": {
-    "build": "tsc"
-  },
-  "dependencies": {
-    "sql.js": "1.13.0"
+    "build": "tsc",
+    "prepare": "npm run build"
   },
   "devDependencies": {
-    "@types/sql.js": "^1.4.9",
-    "@dcloudio/types": "^3.4.28",
-    "@types/webassembly-web-api": "^0.0.7",
-    "@types/wechat-miniprogram": "^3.4.9",
-    "typescript": "^5.9.3"
+    "@types/node": "^25.0.3",
+    "typescript": "^5.9.3",
+    "vite": "^5.2.8"
   },
-  "prepare": "npm run build"
+  "peerDependencies": {
+    "vite": "^5.2.8"
+  }
 }
